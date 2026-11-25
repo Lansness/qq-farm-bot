@@ -17,6 +17,7 @@ const { performDailyMonthCardGift, getMonthCardDailyState } = require('../servic
 const { performDailyVipGift, getVipDailyState } = require('../services/qqvip');
 const { runExclusiveAutomationTask } = require('../services/automation-lock');
 const ranchAutomation = require('../services/ranch/automation');
+const { isRanchMarketEnabled } = require('../config/ranch-automation');
 const { createScheduler, getSchedulerRegistrySnapshot } = require('../services/scheduler');
 const { checkDailyShareStatus, getShareDailyState } = require('../services/share');
 const { refreshActivityWindows } = require('../services/activity-windows');
@@ -131,20 +132,24 @@ let ranchRoutineQueued = false;
 let initialFarmCheckDone = false;
 let initialFriendCheckDone = false;
 let ranchDeferredUntil = 0;
-let onRanchMarketStockReady: (() => void) | null = null;
 
 function ranchNextRunAt(): number {
     // 首轮农场和好友巡查先完成；长好友轮次的访问间隔也不插入场景切换。
     if (!unifiedSchedulerRunning || ranchRoutineQueued || farmTaskRunning || friendTaskRunning
         || !initialFarmCheckDone || !initialFriendCheckDone) return Infinity;
     const state = ranchAutomation.getRoutineState();
-    return state.doneToday ? Infinity : Math.max(state.nextCheckAt, ranchDeferredUntil);
+    return Math.max(state.nextCheckAt, ranchDeferredUntil);
 }
 
 function wakeRanchMarketExchange(): void {
-    if (!loginReady || !getAutomation().ranch_market_organic) return;
-    ranchAutomation.resetMarketSchedule();
+    if (!loginReady || !isRanchMarketEnabled(getAutomation())) return;
+    ranchAutomation.requestMarketCheck();
     scheduleUnifiedNextTick();
+}
+
+function onRanchMarketVisitChanged(rotation: any): void {
+    if (!loginReady || !isRanchMarketEnabled(getAutomation())) return;
+    if (ranchAutomation.noteMarketVisit(rotation)) scheduleUnifiedNextTick();
 }
 
 function runRanchRoutine(detached = false): Promise<void> {
@@ -202,6 +207,14 @@ function startDailyRoutineTimer(runImmediately: boolean = true): void {
     if (runImmediately) runExclusiveAutomationTask('daily_routines', () => runDailyRoutines(true)).catch(() => null);
     workerScheduler.setIntervalTask('daily_routine_interval', 30 * 1000, () => {
         if (!loginReady) return;
+        // 以薯换福：每日自动领取红薯种子（服务内部按自然日去重，受面板开关控制）
+        if (getAutomation().potato_claim !== false) {
+            require('../services/sweet-potato').claimDailySeedsOnce()
+                .then((claim: any) => {
+                    if (claim && claim.claimed) console.log('[以薯换福] 红薯种子领取成功');
+                })
+                .catch(() => {});
+        }
         const today = getSystemDateKey();
         if (today === lastDailyRunDate) {
             const email = getEmailDailyState();
@@ -546,7 +559,9 @@ function applyRuntimeConfig(snapshot: any, syncNow: boolean = false): number {
     const appliedSnapshot = applyConfigSnapshot(snapshot || {}, { persist: false, accountId });
     configureEmailClaim({ hour: appliedSnapshot.emailClaimHour, accountId });
     const nextRanchAuto = getAutomation();
-    if (Object.keys(nextRanchAuto).some(key => key.startsWith('ranch_') && nextRanchAuto[key] !== prevAuto[key])) ranchAutomation.resetSchedule();
+    const ranchChanged = Object.keys(nextRanchAuto).some(key => key.startsWith('ranch_')
+        && JSON.stringify(nextRanchAuto[key]) !== JSON.stringify(prevAuto[key]));
+    if (ranchChanged) ranchAutomation.resetSchedule();
     if (rev > appliedConfigRevision) appliedConfigRevision = rev;
 
     // 优先使用本次下发的间隔，避免 worker 内部 store 漂移导致回退默认值
@@ -686,6 +701,7 @@ async function startBot(config: any): Promise<void> {
     const onLoginSuccess = async (): Promise<void> => {
         if (!canContinueLogin() || loginReady) return;
         loginReady = true;
+        ranchAutomation.resetSchedule();
         if (onSellGain) {
             networkEvents.off('sell', onSellGain);
         }
@@ -713,9 +729,10 @@ async function startBot(config: any): Promise<void> {
         };
         networkEvents.on('farmHarvested', onFarmHarvested);
 
-        if (onRanchMarketStockReady) networkEvents.off('ranchMarketStockReady', onRanchMarketStockReady);
-        onRanchMarketStockReady = wakeRanchMarketExchange;
-        networkEvents.on('ranchMarketStockReady', onRanchMarketStockReady);
+        networkEvents.off('ranchMarketStockReady', wakeRanchMarketExchange);
+        networkEvents.on('ranchMarketStockReady', wakeRanchMarketExchange);
+        networkEvents.off('ranchMarketVisitChanged', onRanchMarketVisitChanged);
+        networkEvents.on('ranchMarketVisitChanged', onRanchMarketVisitChanged);
 
         if (onDogSkillGiftPending) {
             networkEvents.off('dogSkillGiftPending', onDogSkillGiftPending);
@@ -798,10 +815,8 @@ function detachRuntimeListeners(): void {
         networkEvents.off('farmHarvested', onFarmHarvested);
         onFarmHarvested = null;
     }
-    if (onRanchMarketStockReady) {
-        networkEvents.off('ranchMarketStockReady', onRanchMarketStockReady);
-        onRanchMarketStockReady = null;
-    }
+    networkEvents.off('ranchMarketStockReady', wakeRanchMarketExchange);
+    networkEvents.off('ranchMarketVisitChanged', onRanchMarketVisitChanged);
     if (onDogSkillGiftPending) {
         networkEvents.off('dogSkillGiftPending', onDogSkillGiftPending);
         onDogSkillGiftPending = null;
@@ -1061,6 +1076,36 @@ async function handleApiCall(msg: any): Promise<void> {
                     break;
                 case 'getActivityCenterSnapshot':
                     result = await require('../services/activity-center').getActivityCenterSnapshot();
+                    break;
+                case 'probeSweetPotato':
+                    result = await require('../services/sweet-potato').probeSweetPotato();
+                    break;
+                case 'operateSweetPotatoActivity':
+                    result = await require('../services/sweet-potato').operateActivity(args[0]);
+                    break;
+                case 'listSweetPotatoActivities':
+                    result = await require('../services/sweet-potato').listActivities();
+                    break;
+                case 'dumpSweetPotatoGroups':
+                    result = await require('../services/sweet-potato').dumpGroups(args[0] || '20261117');
+                    break;
+                case 'probeSweetPotatoOperate':
+                    result = await require('../services/sweet-potato').probeOperate(args[0]);
+                    break;
+                case 'claimSweetPotatoSeeds':
+                    result = await require('../services/sweet-potato').claimSeedsProbe();
+                    break;
+                case 'getSweetPotatoDetail':
+                    result = await require('../services/sweet-potato').getSweetPotatoActivity();
+                    break;
+                case 'claimSweetPotatoDaily':
+                    result = await require('../services/sweet-potato').claimDailySeedsOnce(true);
+                    break;
+                case 'exchangeSweetPotatoGoods':
+                    result = await require('../services/sweet-potato').exchangeGoods(args[0]);
+                    break;
+                case 'shareSweetPotatoBoost':
+                    result = await require('../services/sweet-potato').shareBoost();
                     break;
                 case 'getCurrentSeasonEvent':
                     result = await require('../services/activity-center').getCurrentSeasonEvent();

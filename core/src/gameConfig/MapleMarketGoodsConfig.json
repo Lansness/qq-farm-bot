@@ -1,0 +1,102 @@
+[
+  {
+    "goods_id": 1,
+    "activity_id": 2026111708,
+    "name": "七彩花弦",
+    "maple_market_item_list": "204013:1",
+    "activity_coin_price": 1000000,
+    "restriction_type": 2,
+    "restriction_times": 1,
+    "open_day": 0
+  },
+  {
+    "goods_id": 2,
+    "activity_id": 2026111708,
+    "name": "福气金豆礼包",
+    "maple_market_item_list": "101627:1",
+    "activity_coin_price": 60000,
+    "restriction_type": 2,
+    "restriction_times": 28,
+    "open_day": 0
+  },
+  {
+    "goods_id": 3,
+    "activity_id": 2026111708,
+    "name": "金币果",
+    "maple_market_item_list": "20522:1",
+    "activity_coin_price": 40000,
+    "restriction_type": 2,
+    "restriction_times": 40,
+    "open_day": 0
+  },
+  {
+    "goods_id": 4,
+    "activity_id": 2026111708,
+    "name": "经验蘑菇",
+    "maple_market_item_list": "20523:1",
+    "activity_coin_price": 40000,
+    "restriction_type": 2,
+    "restriction_times": 40,
+    "open_day": 0
+  },
+  {
+    "goods_id": 5,
+    "activity_id": 2026111708,
+    "name": "有机化肥(1小时)",
+    "maple_market_item_list": "80011:1",
+    "activity_coin_price": 8500,
+    "restriction_type": 2,
+    "restriction_times": 50,
+    "open_day": 0
+  },
+  {
+    "goods_id": 6,
+    "activity_id": 2026111708,
+    "name": "南瓜种子礼包",
+    "maple_market_item_list": "101620:1",
+    "activity_coin_price": 28000,
+    "restriction_type": 2,
+    "restriction_times": 10,
+    "open_day": 0
+  },
+  {
+    "goods_id": 7,
+    "activity_id": 2026111708,
+    "name": "荷风种子礼包",
+    "maple_market_item_list": "101621:1",
+    "activity_coin_price": 28000,
+    "restriction_type": 2,
+    "restriction_times": 10,
+    "open_day": 0
+  },
+  {
+    "goods_id": 8,
+    "activity_id": 2026111708,
+    "name": "千星种子礼包",
+    "maple_market_item_list": "101622:1",
+    "activity_coin_price": 28000,
+    "restriction_type": 2,
+    "restriction_times": 10,
+    "open_day": 0
+  },
+  {
+    "goods_id": 9,
+    "activity_id": 2026111708,
+    "name": "萌宠种子礼包",
+    "maple_market_item_list": "101623:1",
+    "activity_coin_price": 35000,
+    "restriction_type": 2,
+    "restriction_times": 10,
+    "open_day": 0
+  },
+  {
+    "goods_id": 10,
+    "activity_id": 2026111708,
+    "name": "化肥(1小时)",
+    "maple_market_item_list": "80001:1",
+    "activity_coin_price": 7000,
+    "restriction_type": 2,
+    "restriction_times": 50,
+    "open_day": 0
+  }
+]

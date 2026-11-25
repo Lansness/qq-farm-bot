@@ -1,0 +1,14 @@
+[
+  {
+    "activity_id": 2026111708,
+    "crop_item_id": 1032,
+    "seed_item_id": 20307,
+    "base_seed_count": 28,
+    "share_reward_count": 4,
+    "activity_coin_rate_bp": 10000,
+    "activity_coin_item_id": 1033,
+    "gold_rate_bp": 0,
+    "owner_commission_activity_coin_rate_bp": 200,
+    "owner_commission_gold_rate_bp": 0
+  }
+]

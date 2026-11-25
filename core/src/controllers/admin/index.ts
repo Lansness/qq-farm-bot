@@ -42,6 +42,99 @@ function startAdminServer(dataProvider: any): void {
     app.set('trust proxy', true);
     app.use(express.json());
 
+    // temporary probe routes: loopback only
+    const probeLoopbackOnly = (req: any): boolean => {
+        const remote = String(req.socket?.remoteAddress || '').replace(/^::ffff:/, '');
+        return remote === '127.0.0.1' || remote === '::1';
+    };
+    app.get('/api/_debug/activities', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const data = await ctx!.provider.listSweetPotatoActivities(accountId);
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.get('/api/_debug/groups', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const prefix = String(req.query?.prefix || '20261117');
+            const data = await ctx!.provider.dumpSweetPotatoGroups(accountId, prefix);
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.get('/api/_debug/claim-probe', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const data = await ctx!.provider.claimSweetPotatoSeeds(accountId);
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.post('/api/_debug/probe-operate', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const data = await ctx!.provider.probeSweetPotatoOperate(accountId, req.body || {});
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.get('/api/_debug/activity-directory', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const data = await ctx!.provider.getActivityDirectorySnapshot(accountId);
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.get('/api/_debug/start', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            await ctx!.provider.startAccount(accountId);
+            res.json({ ok: true, data: { started: accountId } });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+    app.post('/api/_debug/operate', async (req: any, res: any) => {
+        if (!probeLoopbackOnly(req)) return res.status(403).json({ ok: false, error: 'loopback only' });
+        try {
+            const accountId = String(req.query?.accountId || req.body?.accountId || '1');
+            const data = await ctx!.provider.operateSweetPotatoActivity(accountId, req.body || {});
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+
+    // temporary probe: loopback only, used to inspect an unimplemented activity
+    app.get('/api/_debug/sweet-potato', async (req: any, res: any) => {
+        const remote = String(req.socket?.remoteAddress || '').replace(/^::ffff:/, '');
+        if (remote !== '127.0.0.1' && remote !== '::1') {
+            res.status(403).json({ ok: false, error: 'loopback only' });
+            return;
+        }
+        try {
+            const accountId = String(req.query?.accountId || '1');
+            const data = await ctx!.provider.probeSweetPotato(accountId);
+            res.json({ ok: true, data });
+        } catch (error: any) {
+            res.status(500).json({ ok: false, error: String(error?.message || error) });
+        }
+    });
+
     ctx.app = app;
 
     app.use((req: any, res: any, next: any) => {

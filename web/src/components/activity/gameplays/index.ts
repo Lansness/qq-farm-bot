@@ -9,6 +9,7 @@ import { weatherGameplay } from './weather'
 
 const gameplayModules: Record<ActivityGameplayKey, ActivityGameplayModule> = {
   muge: { key: 'muge', defaultTab: 'muge', tabs: ['muge'] },
+  potato: { key: 'potato', defaultTab: 'potato', tabs: ['potato'] },
   pet: petGameplay,
   wish: { key: 'wish', defaultTab: 'wish', tabs: ['wish'] },
   milk: { key: 'milk', defaultTab: 'milk', tabs: ['milk'] },
@@ -29,6 +30,8 @@ function inferGameplayKey(activity: ActivityDirectoryItemDto): ActivityGameplayK
     return 'pet'
   if (activity.detailTarget === 'weather')
     return 'weather'
+  if (activity.detailTarget === 'potato')
+    return 'potato'
   if (activity.detailTarget === 'charity')
     return 'charity'
   if (activity.detailTarget === 'qixi')

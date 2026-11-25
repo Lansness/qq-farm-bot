@@ -14,6 +14,7 @@ import { useFriendStore } from '@/stores/friend'
 import ActivityDirectoryPage from './activity-center/ActivityDirectoryPage.vue'
 import AutumnActivityPage from './activity-center/AutumnActivityPage.vue'
 import CharityActivityPage from './activity-center/CharityActivityPage.vue'
+import SweetPotatoPage from './activity-center/SweetPotatoPage.vue'
 import MilkTeaPage from './activity-center/MilkTeaPage.vue'
 import MugePage from './activity-center/MugePage.vue'
 import PetDiaryPage from './activity-center/PetDiaryPage.vue'
@@ -52,7 +53,7 @@ async function openActivity(activity: ActivityDirectoryItemDto) {
 
   selectedActivity.value = gameplay.module.key
   selectedInstanceId.value = activity.instanceId || activity.activityIds.find(id => ['2026092501', '2026110104'].includes(id)) || ''
-  if (['pet', 'wish', 'happy', 'milk', 'muge'].includes(gameplay.module.key))
+  if (['pet', 'wish', 'happy', 'milk', 'muge', 'potato'].includes(gameplay.module.key))
     return
   const detailsLoaded = await activityStore.loadDetails(accountId(), gameplay.module.key)
   if (gameplay.module.key === 'qixi' && currentAccountId.value) {
@@ -148,6 +149,10 @@ onUnmounted(() => {
   />
   <CharityActivityPage
     v-else-if="selectedActivity === 'charity'"
+    @back="goBack"
+  />
+  <SweetPotatoPage
+    v-else-if="selectedActivity === 'potato'"
     @back="goBack"
   />
   <WeatherActivityPage

@@ -11,7 +11,7 @@ export type PlantingStrategy =
 
 export type BagSeedFallbackStrategy = Exclude<PlantingStrategy, 'bag_priority'>;
 
-export type FertilizerMode = 'both' | 'normal' | 'organic' | 'smart' | 'none';
+export type FertilizerMode = 'both' | 'normal' | 'organic' | 'smart' | 'none' | 'normal_ripen' | 'organic_ripen';
 
 export type FertilizerLandType = 'blue-crystal' | 'purple-gold' | 'gold' | 'black' | 'red' | 'normal';
 
@@ -28,6 +28,7 @@ export interface AutomationConfig extends RanchAutomationConfig {
   friend_bad: boolean;
   friend_help_protect_dog_ignore_exp_limit: boolean;
   task: boolean;
+  potato_claim: boolean;
   fertilizer_gift: boolean;
   fertilizer_buy_organic: boolean;
   fertilizer_buy_normal: boolean;
